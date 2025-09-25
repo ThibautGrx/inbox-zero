@@ -91,7 +91,6 @@ import {
 import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
 import { isDefined } from "@/utils/types";
 import { canActionBeDelayed } from "@/utils/delayed-actions";
-import { useDelayedActionsEnabled } from "@/hooks/useFeatureFlags";
 import type { EmailLabel } from "@/providers/EmailProvider";
 import { FolderSelector } from "@/components/FolderSelector";
 import { useFolders } from "@/hooks/useFolders";
@@ -609,7 +608,7 @@ export function RuleForm({
                               }
                             )?.instructions
                           }
-                          placeholder='e.g. Apply this rule to all "receipts"'
+                          placeholder="e.g. Newsletters, regular content from publications, blogs, or services I've subscribed to"
                           tooltipText="The instructions that will be passed to the AI."
                         />
                       )}
@@ -1047,7 +1046,6 @@ function ActionCard({
 }) {
   const fields = actionInputs[action.type].fields;
   const [expandedFields, setExpandedFields] = useState(false);
-  const delayedActionsEnabled = useDelayedActionsEnabled();
 
   // Get expandable fields that should be visible regardless of expanded state
   const hasExpandableFields = fields.some((field) => field.expandable);
@@ -1059,8 +1057,8 @@ function ActionCard({
       : false;
 
   const actionCanBeDelayed = useMemo(
-    () => delayedActionsEnabled && canActionBeDelayed(action.type),
-    [action.type, delayedActionsEnabled],
+    () => canActionBeDelayed(action.type),
+    [action.type],
   );
 
   const delayValue = watch(`actions.${index}.delayInMinutes`);
@@ -1223,8 +1221,8 @@ function ActionCard({
                     !setManually ? (
                     <div className="mt-2 flex h-full flex-col items-center justify-center gap-2 p-4 border rounded">
                       <div className="max-w-sm text-center text-sm text-muted-foreground">
-                        Our AI will generate a reply using your knowledge base
-                        and previous conversations with the sender
+                        Our AI will generate a reply based on your email history
+                        and knowledge base
                       </div>
 
                       <Button

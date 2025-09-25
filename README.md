@@ -5,7 +5,7 @@
     <h1 align="center">Inbox Zero - your 24/7 AI email assistant</h1>
   </a>
   <p align="center">
-    Organizes your inbox, pre-drafts replies, and tracks follow‑ups - so you reach inbox zero faster. Open source.
+    Organizes your inbox, pre-drafts replies, and tracks follow‑ups - so you reach inbox zero faster. Open source alternative to Fyxer, but more customisable and secure.
     <br />
     <a href="https://www.getinboxzero.com">Website</a>
     ·
@@ -395,6 +395,21 @@ docker run -p 3000:3000 \
 **Important:** If you need to change `NEXT_PUBLIC_BASE_URL`, you must rebuild the Docker image. It cannot be changed at runtime.
 
 For more detailed Docker build instructions and security considerations, see [docker/DOCKER_BUILD_GUIDE.md](docker/DOCKER_BUILD_GUIDE.md).
+
+
+### Calendar integrations
+
+*Note:* The calendar integration feature is a work in progress.
+
+#### Google Calendar
+
+1. Visit: https://console.cloud.google.com/apis/library
+2. Search for "Google Calendar API"
+3. Click on it and then click "Enable"
+4. Visit: [credentials](https://console.cloud.google.com/apis/credentials):
+    1. Click on your project
+    2. In `Authorized redirect URIs` add:
+      - `http://localhost:3000/api/google/calendar/callback`
 
 ## Contributing to the project
 

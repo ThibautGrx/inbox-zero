@@ -24,6 +24,13 @@ const navigation = {
     { name: "Customer Support", href: "/support" },
     { name: "E-commerce", href: "/ecommerce" },
   ],
+  compare: [
+    { name: "vs Fyxer.ai", href: "/best-fyxer-alternative" },
+    {
+      name: "vs Perplexity Email Assistant",
+      href: "/best-perplexity-email-assistant-alternative",
+    },
+  ],
   support: [
     { name: "Pricing", href: "/#pricing" },
     { name: "Contact", href: "mailto:elie@getinboxzero.com", target: "_blank" },
@@ -43,6 +50,7 @@ const navigation = {
   company: [
     { name: "Affiliates", href: "/affiliates", target: "_blank" },
     { name: "Blog", href: "/blog" },
+    { name: "Case Studies", href: "/case-studies" },
     { name: "Twitter", href: "/twitter", target: "_blank" },
     { name: "GitHub", href: "/github", target: "_blank" },
     { name: "Discord", href: "/discord", target: "_blank" },
@@ -113,6 +121,10 @@ export function Footer() {
           </div>
           <div>
             <FooterList title="Use Cases" items={navigation.useCases} />
+
+            <div className="mt-6">
+              <FooterList title="Compare" items={navigation.compare} />
+            </div>
           </div>
           <div>
             <FooterList title="Support" items={navigation.support} />

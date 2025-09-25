@@ -10,6 +10,7 @@ import {
 } from "@prisma/client";
 import { truncate } from "@/utils/string";
 import { getEmailTerminology } from "@/utils/terminology";
+import { sortActionsByPriority } from "@/utils/action-sort";
 
 type Plan = Pick<ExecutedRule, "reason" | "status"> & {
   rule: Rule | null;
@@ -53,7 +54,7 @@ export function PlanBadge(props: { plan?: Plan; provider: string }) {
             </div>
           ) : null}
           <div className="mt-4 space-y-2">
-            {plan.actionItems?.map((action, i) => {
+            {sortActionsByPriority(plan.actionItems || []).map((action, i) => {
               return (
                 <div key={i}>
                   <Badge
@@ -213,9 +214,18 @@ export function getActionColor(actionType: ActionType): Color {
     case ActionType.MARK_READ:
       return "yellow";
     case ActionType.LABEL:
+    case ActionType.MOVE_FOLDER:
       return "blue";
-    default:
+    case ActionType.MARK_SPAM:
+      return "red";
+    case ActionType.CALL_WEBHOOK:
+    case ActionType.TRACK_THREAD:
+    case ActionType.DIGEST:
       return "purple";
+    default: {
+      const exhaustiveCheck: never = actionType;
+      return exhaustiveCheck;
+    }
   }
 }
 

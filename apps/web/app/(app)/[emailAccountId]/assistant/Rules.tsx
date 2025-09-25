@@ -17,12 +17,7 @@ import {
 import { useMemo } from "react";
 import { LoadingContent } from "@/components/LoadingContent";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-} from "@/components/ui/card";
+import { Card, CardDescription, CardHeader } from "@/components/ui/card";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -52,10 +47,10 @@ import { prefixPath } from "@/utils/path";
 import { ExpandableText } from "@/components/ExpandableText";
 import { useEmailAccountFull } from "@/hooks/useEmailAccountFull";
 import type { RulesResponse } from "@/app/api/user/rules/route";
+import { sortActionsByPriority } from "@/utils/action-sort";
 import { inboxZeroLabels } from "@/utils/label";
 import { isDefined } from "@/utils/types";
-import { useAssistantNavigation } from "@/hooks/useAssistantNavigation";
-import { getActionDisplay } from "@/utils/action-display";
+import { getActionDisplay, getActionIcon } from "@/utils/action-display";
 import { RuleDialog } from "./RuleDialog";
 import { useDialogState } from "@/hooks/useDialogState";
 import { ColdEmailDialog } from "@/app/(app)/[emailAccountId]/cold-email-blocker/ColdEmailDialog";
@@ -85,7 +80,6 @@ export function Rules({
   const onCreateRule = () => ruleDialog.onOpen();
 
   const { emailAccountId, provider } = useAccount();
-  const { createAssistantUrl } = useAssistantNavigation(emailAccountId);
   const { executeAsync: setRuleEnabled } = useAction(
     setRuleEnabledAction.bind(null, emailAccountId),
     {
@@ -140,7 +134,7 @@ export function Rules({
           ? {
               id: "cold-email-blocker-label",
               type: ActionType.LABEL,
-              label: inboxZeroLabels.cold_email.name.split("/")[1],
+              label: inboxZeroLabels.cold_email.name,
               createdAt: new Date(),
               updatedAt: new Date(),
               ruleId: COLD_EMAIL_BLOCKER_RULE_ID,
@@ -227,18 +221,15 @@ export function Rules({
                   <TableHead>Name</TableHead>
                   {size === "md" && <TableHead>Condition</TableHead>}
                   <TableHead>Action</TableHead>
-                  {/* {size === "md" && (
-                    <TableHead>
-                      <div className="flex items-center justify-center gap-1">
-                        <span>Threads</span>
-                        <ThreadsExplanation size="sm" />
-                      </div>
-                    </TableHead>
-                  )} */}
                   <TableHead>
                     {showAddRuleButton && (
                       <div className="flex justify-end">
-                        <AddRuleButton onClick={onCreateRule} />
+                        <div className="my-2">
+                          <Button size="sm" onClick={onCreateRule}>
+                            <PlusIcon className="mr-2 hidden size-4 md:block" />
+                            Add Rule
+                          </Button>
+                        </div>
                       </div>
                     )}
                   </TableHead>
@@ -253,11 +244,22 @@ export function Rules({
                     <TableRow
                       key={rule.id}
                       className={!rule.enabled ? "bg-muted opacity-60" : ""}
+                      onClick={() => {
+                        if (isColdEmailBlocker) {
+                          coldEmailDialog.onOpen();
+                        } else {
+                          ruleDialog.onOpen({
+                            ruleId: rule.id,
+                            editMode: false,
+                          });
+                        }
+                      }}
                     >
                       <TableCell className="font-medium">
                         <button
                           type="button"
-                          onClick={() => {
+                          onClick={(e) => {
+                            e.stopPropagation();
                             if (isColdEmailBlocker) {
                               coldEmailDialog.onOpen();
                             } else {
@@ -267,7 +269,7 @@ export function Rules({
                               });
                             }
                           }}
-                          className="flex items-center gap-2 text-left hover:underline"
+                          className="flex items-center gap-2 text-left"
                         >
                           {!rule.enabled && (
                             <Badge color="red" className="mr-2">
@@ -302,31 +304,6 @@ export function Rules({
                           provider={provider}
                         />
                       </TableCell>
-                      {/* {size === "md" && (
-                        <TableCell>
-                          <div className="flex justify-center">
-                            <Toggle
-                              enabled={rule.runOnThreads}
-                              name="runOnThreads"
-                              onChange={async () => {
-                                if (isColdEmailBlocker) return;
-
-                                const result = await setRuleRunOnThreads({
-                                  ruleId: rule.id,
-                                  runOnThreads: !rule.runOnThreads,
-                                });
-
-                                if (result?.serverError) {
-                                  toastError({
-                                    description: `There was an error updating your rule. ${result.serverError || ""}`,
-                                  });
-                                }
-                                mutate();
-                              }}
-                            />
-                          </div>
-                        </TableCell>
-                      )} */}
                       <TableCell className="text-center">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
@@ -334,27 +311,16 @@ export function Rules({
                               aria-haspopup="true"
                               size="icon"
                               variant="ghost"
+                              onClick={(e) => e.stopPropagation()}
                             >
                               <MoreHorizontalIcon className="size-4" />
                               <span className="sr-only">Toggle menu</span>
                             </Button>
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem
-                              onClick={() => {
-                                if (isColdEmailBlocker) {
-                                  coldEmailDialog.onOpen();
-                                } else {
-                                  ruleDialog.onOpen({
-                                    ruleId: rule.id,
-                                    editMode: false,
-                                  });
-                                }
-                              }}
-                            >
-                              <EyeIcon className="mr-2 size-4" />
-                              View
-                            </DropdownMenuItem>
+                          <DropdownMenuContent
+                            align="end"
+                            onClick={(e) => e.stopPropagation()}
+                          >
                             <DropdownMenuItem
                               onClick={() => {
                                 if (isColdEmailBlocker) {
@@ -391,11 +357,10 @@ export function Rules({
                                         emailAccountId,
                                         "/cold-email-blocker",
                                       )
-                                    : createAssistantUrl({
-                                        tab: "history",
-                                        ruleId: rule.id,
-                                        path: "/automation?tab=history",
-                                      })
+                                    : prefixPath(
+                                        emailAccountId,
+                                        `/automation?tab=history&ruleId=${rule.id}`,
+                                      )
                                 }
                                 target={
                                   isColdEmailBlocker ? "_blank" : undefined
@@ -492,7 +457,7 @@ export function Rules({
               </TableBody>
             </Table>
           ) : (
-            <NoRules onCreateRule={onCreateRule} />
+            <NoRules />
           )}
         </LoadingContent>
       </Card>
@@ -525,14 +490,18 @@ export function ActionBadges({
     type: ActionType;
     label?: string | null;
     folderName?: string | null;
+    content?: string | null;
+    to?: string | null;
   }[];
   provider: string;
 }) {
   return (
-    <div className="flex gap-2">
-      {actions.map((action) => {
+    <div className="flex gap-2 flex-wrap">
+      {sortActionsByPriority(actions).map((action) => {
         // Hidden for simplicity
         if (action.type === ActionType.TRACK_THREAD) return null;
+
+        const Icon = getActionIcon(action.type);
 
         return (
           <Badge
@@ -540,6 +509,7 @@ export function ActionBadges({
             color={getActionColor(action.type)}
             className="w-fit text-nowrap"
           >
+            <Icon className="size-3 mr-1.5" />
             {getActionDisplay(action, provider)}
           </Badge>
         );
@@ -548,31 +518,10 @@ export function ActionBadges({
   );
 }
 
-function NoRules({ onCreateRule }: { onCreateRule: () => void }) {
+function NoRules() {
   return (
-    <>
-      <CardHeader>
-        <CardDescription>
-          You don't have any rules yet.
-          <br />
-          You can teach your AI assistant how to handle your emails by chatting
-          with it or create rules manually.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <AddRuleButton onClick={onCreateRule} />
-      </CardContent>
-    </>
-  );
-}
-
-function AddRuleButton({ onClick }: { onClick: () => void }) {
-  return (
-    <div className="my-2">
-      <Button size="sm" onClick={onClick}>
-        <PlusIcon className="mr-2 hidden size-4 md:block" />
-        Add Rule
-      </Button>
-    </div>
+    <CardHeader>
+      <CardDescription>You don't have any rules yet.</CardDescription>
+    </CardHeader>
   );
 }
